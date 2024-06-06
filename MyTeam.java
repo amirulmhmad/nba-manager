@@ -338,6 +338,64 @@ public class MyTeam extends JFrame {
         }
     }
 
+    //method to calculate Composite Score
+    private void calculateCompositeScore() {
+        double scoresWeight = 1.5;
+        double reboundsWeight;
+        double stealsWeight;
+        double assistsWeight;
+        double blocksWeight;
+
+        switch (position) {
+            case "Center":
+                reboundsWeight = 1.5;
+                stealsWeight = 1.0;
+                assistsWeight = 1.0;
+                blocksWeight = 1.5;
+                break;
+            case "Forward":
+                reboundsWeight = 1.3;
+                stealsWeight = 1.0;
+                assistsWeight = 1.1;
+                blocksWeight = 1.3;
+                break;
+            case "Guard":
+                reboundsWeight = 1.0;
+                stealsWeight = 1.5;
+                assistsWeight = 1.5;
+                blocksWeight = 1.0;
+                break;
+            default:
+                reboundsWeight = 1.0;
+                stealsWeight = 1.0;
+                assistsWeight = 1.0;
+                blocksWeight = 1.0;
+                break;
+        }
+        
+        this.compositeScore = (points * pointsWeight) + (rebounds * reboundsWeight) +(steals * stealsWeight) + (assists * assistsWeight) + (blocks * blocksWeight);
+    }
+
+    //method to rank players based on the composite score
+    public void rankPlayers() {
+        for (Player player : players) {
+            player.calculateCompositeScore();
+        }
+        players.sort(Comparator.comparingDouble(p -> -p.compositeScore));
+    }
+    
+    //method to display players based on the ranking
+    public String getRankings() {
+        StringBuilder rankings = new StringBuilder("-- Player Performance Ranking --\n");
+        int rank = 1;
+        for (Player player : players) {
+            rankings.append("Player: ").append(player.name).append("\n")
+                    .append("Composite Score: ").append(player.compositeScore).append("\n")
+                    .append("Rank: ").append(rank++).append("\n\n");
+        }
+        return rankings.toString();
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new MyTeam();
