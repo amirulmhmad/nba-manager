@@ -108,6 +108,22 @@ public class MyTeam extends JFrame {
         JPanel searchButtonPanel = new JPanel();
         searchButtonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         searchButtonPanel.add(searchButton);
+
+        //rank button in searchBUttonPanel
+        JButton rankButton = new JButton("Rank Players");
+        rankButton.setFont(font);
+        rankButton.setPreferredSize(new Dimension(125, 45));
+
+        rankButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rankPlayers();
+                String rankings = getRankings();
+                JOptionPane.showMessageDialog(MyTeam.this, rankings);
+            }
+        });
+
+        searchButtonPanel.add(rankButton);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
 
         // Content Panel
@@ -336,6 +352,64 @@ public class MyTeam extends JFrame {
                 new Injury();
                 break;
         }
+    }
+
+    //method to calculate Composite Score
+    public void calculateCompositeScore() {
+        double pointsWeight = 1.5; // Higher weight for points as it is a primary metric for all players
+        double reboundsWeight;
+        double stealsWeight;
+        double assistsWeight;
+        double blocksWeight;
+
+        switch (position) {
+            case "Center":
+                reboundsWeight = 1.5;
+                stealsWeight = 1.0;
+                assistsWeight = 1.0;
+                blocksWeight = 1.5;
+                break;
+            case "Forward":
+                reboundsWeight = 1.3;
+                stealsWeight = 1.0;
+                assistsWeight = 1.1;
+                blocksWeight = 1.3;
+                break;
+            case "Guard":
+                reboundsWeight = 1.0;
+                stealsWeight = 1.5;
+                assistsWeight = 1.5;
+                blocksWeight = 1.0;
+                break;
+            default:
+                reboundsWeight = 1.0;
+                stealsWeight = 1.0;
+                assistsWeight = 1.0;
+                blocksWeight = 1.0;
+                break;
+        }
+        
+        this.compositeScore = (points * pointsWeight) + (rebounds * reboundsWeight) +(steals * stealsWeight) + (assists * assistsWeight) + (blocks * blocksWeight);
+    }
+    
+    //method to rank players based on the composite score
+    public void rankPlayers() {
+        for (Player player : players) {
+            player.calculateCompositeScore();
+        }
+        players.sort(Comparator.comparingDouble(p -> -p.compositeScore));
+    }
+    
+    //method to display players based on the ranking
+    public String getRankings() {
+        StringBuilder rankings = new StringBuilder("-- Player Performance Ranking --\n");
+        int rank = 1;
+        for (Player player : players) {
+            rankings.append("Player: ").append(player.name).append("\n")
+                    .append("Composite Score: ").append(player.compositeScore).append("\n")
+                    .append("Rank: ").append(rank++).append("\n\n");
+        }
+        return rankings.toString();
     }
 
     public static void main(String[] args) {
