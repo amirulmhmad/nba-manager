@@ -108,6 +108,19 @@ public class MyTeam extends JFrame {
         JPanel searchButtonPanel = new JPanel();
         searchButtonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         searchButtonPanel.add(searchButton);
+
+        //rank button
+        JButton rankButton = new JButton("Ranking");
+        rankButton.setFont(font);
+        rankButton.setPreferredSize(new Dimension(125, 45));
+        rankButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                rankPlayers();
+                showRankings(MyTeam.this);
+            }
+        });
+        searchButtonPanel.add(rankButton);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
 
         // Content Panel
@@ -335,6 +348,81 @@ public class MyTeam extends JFrame {
             case "INJURY":
                 new Injury();
                 break;
+        }
+    }
+
+    List<Player> players = new ArrayList<>();
+
+    public void addPlayer(Player player) {
+        players.add(player);
+    }
+    
+    public void rankPlayers() {
+        for (Player player : players) {
+            player.calculateCompositeScore(player);
+        }
+        players.sort(Comparator.comparingDouble(p -> -p.compositeScore));
+    }
+
+    public void showRankings(Component parentComponent) {
+        String[] columnNames = {"Rank", "Player", "Composite Score"};
+        Object[][] data = new Object[players.size()][3];
+        
+        for (int i = 0; i < players.size(); i++) {
+            Player player = players.get(i);
+            data[i][0] = i + 1;
+            data[i][1] = player.name;
+            data[i][2] = player.compositeScore;
+        }
+
+        JTable table = new JTable(data, columnNames);
+        JScrollPane scrollPane = new JScrollPane(table);
+        table.setFillsViewportHeight(true);
+
+        JOptionPane.showMessageDialog(parentComponent, scrollPane, "Player Performance Ranking", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void loadPlayersFromDatabase() {
+        String url = "jdbc:mysql://localhost:3306/nbamanager";  
+        String statsQuery = "SELECT name, points, rebounds, steals, assists, blocks, position FROM player_stat_23_24";
+        String selectedPlayersQuery = "SELECT name FROM team_players";
+
+        try (Connection conn = DriverManager.getConnection(url);
+             Statement statsStmt = conn.createStatement();
+             Statement selectedPlayersStmt = conn.createStatement();
+             ResultSet statsRs = statsStmt.executeQuery(statsQuery);
+             ResultSet selectedPlayersRs = selectedPlayersStmt.executeQuery(selectedPlayersQuery)) {
+
+            List<Player> allPlayers = new ArrayList<>();
+            while (statsRs.next()) {
+                Player player = new Player(
+                    statsRs.getString("name"),
+                    statsRs.getDouble("points"),
+                    statsRs.getDouble("rebounds"),
+                    statsRs.getDouble("steals"),
+                    statsRs.getDouble("assists"),
+                    statsRs.getDouble("blocks"),
+                    statsRs.getString("position")
+                );
+                allPlayers.add(player);
+            }
+            
+            List<String> selectedPlayerNames = new ArrayList<>();
+            while (selectedPlayersRs.next()) {
+                selectedPlayerNames.add(selectedPlayersRs.getString("name"));
+            }
+
+            for (String playerName : selectedPlayerNames) {
+                for (Player player : allPlayers) {
+                    if (player.name.equals(playerName)) {
+                        addPlayer(player);
+                        break;
+                    }
+                }
+            }            
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
     }
 
