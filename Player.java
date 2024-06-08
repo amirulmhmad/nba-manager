@@ -18,6 +18,16 @@ public class Player {
     public double compositeScore;
     public String imagePath;
 
+    public Player(String name, double points, double rebounds, double steals, double assists, double blocks, String position) {
+        this.name = name;
+        this.points = points;
+        this.rebounds = rebounds;
+        this.steals = steals;
+        this.assists = assists;
+        this.blocks = blocks;
+        this.position = position;
+    }
+
     public void calculateCompositeScore(Player player) {
         double pointsWeight = 1.0;
         double reboundsWeight;
