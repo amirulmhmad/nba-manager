@@ -23,6 +23,7 @@ public class MyTeam extends JFrame {
 
     public MyTeam(){
         initialize();
+        loadPlayersFromDatabase(jdbcUrl, username, password);
     }
 
     public void initialize() {
@@ -382,44 +383,27 @@ public class MyTeam extends JFrame {
         JOptionPane.showMessageDialog(parentComponent, scrollPane, "Player Performance Ranking", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void loadPlayersFromDatabase() {
-        String url = "jdbc:mysql://localhost:3306/nbamanager";  
-        String statsQuery = "SELECT name, points, rebounds, steals, assists, blocks, position FROM player_stat_23_24";
-        String selectedPlayersQuery = "SELECT name FROM team_players";
+    public void loadPlayersFromDatabase(String dbUrl, String dbUser, String dbPassword) {
+        String query = "SELECT tp.name, tp.position, ps.pts, ps.reb, ps.ast, ps.blk, ps.stl " +
+                       "FROM team_players tp " +
+                       "LEFT JOIN players_stat_23_24 ps ON tp.name = ps.name;";
 
-        try (Connection conn = DriverManager.getConnection(url);
-             Statement statsStmt = conn.createStatement();
-             Statement selectedPlayersStmt = conn.createStatement();
-             ResultSet statsRs = statsStmt.executeQuery(statsQuery);
-             ResultSet selectedPlayersRs = selectedPlayersStmt.executeQuery(selectedPlayersQuery)) {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
-            List<Player> allPlayers = new ArrayList<>();
-            while (statsRs.next()) {
+            while (rs.next()) {
                 Player player = new Player(
-                    statsRs.getString("name"),
-                    statsRs.getDouble("points"),
-                    statsRs.getDouble("rebounds"),
-                    statsRs.getDouble("steals"),
-                    statsRs.getDouble("assists"),
-                    statsRs.getDouble("blocks"),
-                    statsRs.getString("position")
+                    rs.getString("name"),
+                    rs.getDouble("points"),
+                    rs.getDouble("rebounds"),
+                    rs.getDouble("steals"),
+                    rs.getDouble("assists"),
+                    rs.getDouble("blocks"),
+                    rs.getString("position")
                 );
-                allPlayers.add(player);
+                addPlayer(player);
             }
-            
-            List<String> selectedPlayerNames = new ArrayList<>();
-            while (selectedPlayersRs.next()) {
-                selectedPlayerNames.add(selectedPlayersRs.getString("name"));
-            }
-
-            for (String playerName : selectedPlayerNames) {
-                for (Player player : allPlayers) {
-                    if (player.name.equals(playerName)) {
-                        addPlayer(player);
-                        break;
-                    }
-                }
-            }            
 
         } catch (SQLException e) {
             System.out.println(e.getMessage());
